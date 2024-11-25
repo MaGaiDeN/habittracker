@@ -66,7 +66,9 @@ export const api = {
     return res.json()
   },
 
-  getStats: (token: string): Promise<any> => {
+  getStats: (token: string): Promise<{
+    [key: string]: number | string;
+  }> => {
     return axios.get('/api/stats', {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.data)
