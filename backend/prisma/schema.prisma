@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  trackers  Tracker[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tracker {
+  id            String       @id @default(uuid())
+  userId        String
+  courseName    String
+  startDate     DateTime
+  endDate       DateTime
+  contemplations String?
+  beliefs       String?
+  doors         String?
+  shortcuts     String?
+  selfInquiry   String?
+  notes         String?
+  dailyEntries  DailyEntry[]
+  user          User        @relation(fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model DailyEntry {
+  id        String   @id @default(uuid())
+  trackerId String
+  date      DateTime
+  completed Boolean  @default(false)
+  notes     String?
+  tracker   Tracker  @relation(fields: [trackerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([trackerId, date])
+}

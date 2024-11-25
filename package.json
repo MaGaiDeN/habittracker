@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  }
+}
