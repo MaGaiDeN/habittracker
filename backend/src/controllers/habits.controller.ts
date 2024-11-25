@@ -8,14 +8,19 @@ type HabitWithCompletions = {
 export const createHabit = async (req: Request, res: Response) => {
   try {
     const { name, type, description } = req.body
-    const userId = req.user?.id // Asumiendo que tenemos middleware de auth
+    const userId = req.user?.id
 
-    const habit = await prisma.habit.create({
+    if (!userId) {
+      return res.status(401).json({ message: 'Usuario no autorizado' })
+    }
+
+    const habit = await prisma.tracker.create({
       data: {
-        name,
-        type,
-        description,
-        userId
+        courseName: name,
+        startDate: new Date(),
+        endDate: new Date(),
+        userId,
+        contemplations: description
       }
     })
 
@@ -29,7 +34,7 @@ export const getHabits = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id
 
-    const habits = await prisma.habit.findMany({
+    const habits = await prisma.tracker.findMany({
       where: { userId }
     })
 
@@ -45,7 +50,7 @@ export const completeHabit = async (req: Request, res: Response) => {
     const userId = req.user?.id
 
     // Verificar que el hábito pertenece al usuario
-    const habit = await prisma.habit.findFirst({
+    const habit = await prisma.tracker.findFirst({
       where: {
         id: habitId,
         userId
@@ -57,10 +62,11 @@ export const completeHabit = async (req: Request, res: Response) => {
     }
 
     // Registrar completado
-    const completion = await prisma.habitCompletion.create({
+    const completion = await prisma.dailyEntry.create({
       data: {
-        habitId,
-        completedAt: new Date()
+        trackerId: habitId,
+        completed: true,
+        date: new Date()
       }
     })
 
