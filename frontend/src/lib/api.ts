@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
+// Log la URL base al iniciar
+console.log('API URL configurada:', API_URL)
+console.log('Ambiente:', process.env.NODE_ENV)
+
 // Añadir función de ayuda para logs
 const log = (message: string, ...args: any[]) => {
   if (process.env.NODE_ENV === 'development') {
