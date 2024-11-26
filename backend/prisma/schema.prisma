@@ -52,6 +52,9 @@ model DailyEntry {
   tracker   Tracker  @relation(fields: [trackerId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  contemplations String?
+  beliefs       String?
+  shortcuts     String?
 
   @@unique([trackerId, date])
 }

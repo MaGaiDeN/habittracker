@@ -60,5 +60,48 @@ export const updateTracker = async (req: Request, res: Response) => {
 }
 
 export const updateDailyEntry = async (req: Request, res: Response) => {
-  // implementation
+  try {
+    const { trackerId, date } = req.params
+    const { completed, contemplations, beliefs, shortcuts } = req.body
+    const userId = req.user?.id
+
+    // Verificar que el tracker pertenece al usuario
+    const tracker = await prisma.tracker.findFirst({
+      where: {
+        id: trackerId,
+        userId
+      }
+    })
+
+    if (!tracker) {
+      return res.status(404).json({ message: 'Tracker no encontrado' })
+    }
+
+    const updateData = {
+      completed: completed === undefined ? undefined : completed,
+      contemplations: contemplations === undefined ? undefined : contemplations,
+      beliefs: beliefs === undefined ? undefined : beliefs,
+      shortcuts: shortcuts === undefined ? undefined : shortcuts
+    }
+
+    const entry = await prisma.dailyEntry.upsert({
+      where: {
+        trackerId_date: {
+          trackerId,
+          date: new Date(date)
+        }
+      },
+      update: updateData,
+      create: {
+        trackerId,
+        date: new Date(date),
+        ...updateData
+      }
+    })
+
+    res.json(entry)
+  } catch (error) {
+    console.error('Error al actualizar entrada:', error)
+    res.status(500).json({ message: 'Error al actualizar entrada' })
+  }
 } 
