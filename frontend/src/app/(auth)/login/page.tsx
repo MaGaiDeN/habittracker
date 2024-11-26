@@ -31,6 +31,21 @@ export default function LoginPage() {
     }
   }
 
+  const loginWithTestAccount = async () => {
+    setError('')
+    setLoading(true)
+
+    try {
+      const { token } = await api.login('test@test.com', '123456')
+      setToken(token)
+      router.push('/dashboard')
+    } catch (error) {
+      setError('Error al iniciar sesión con cuenta de prueba')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
@@ -80,15 +95,11 @@ export default function LoginPage() {
           <div className="text-center space-y-4">
             <button
               type="button"
-              onClick={() => {
-                const emailInput = document.getElementById('email') as HTMLInputElement
-                const passwordInput = document.getElementById('password') as HTMLInputElement
-                emailInput.value = 'test@test.com'
-                passwordInput.value = '123456'
-              }}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              onClick={loginWithTestAccount}
+              disabled={loading}
+              className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-              Usar cuenta de prueba
+              {loading ? 'Iniciando sesión...' : 'Usar cuenta de prueba'}
             </button>
             
             <div className="text-sm">
