@@ -24,21 +24,18 @@ model User {
 }
 
 model Tracker {
-  id            String       @id @default(uuid())
-  userId        String
-  courseName    String
-  startDate     DateTime
-  endDate       DateTime
+  id          String       @id @default(uuid())
+  courseName  String
+  startDate   DateTime
+  endDate     DateTime
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  dailyEntries DailyEntry[]
   contemplations String?
   beliefs       String?
-  doors         String?
   shortcuts     String?
-  selfInquiry   String?
-  notes         String?
-  dailyEntries  DailyEntry[]
-  user          User        @relation(fields: [userId], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([userId])
 }
