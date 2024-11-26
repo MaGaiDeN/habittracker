@@ -15,7 +15,7 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
   const [error, setError] = useState('')
 
   const createTrackerMutation = useMutation({
-    mutationFn: (data: {
+    mutationFn: async (data: {
       courseName: string;
       startDate: Date;
       endDate: Date;
@@ -25,12 +25,24 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
       shortcuts?: string;
       selfInquiry?: string;
       notes?: string;
-    }) => api.createTracker(token!, data),
+    }) => {
+      console.log('Intentando crear tracker con datos:', data)
+      try {
+        const result = await api.createTracker(token!, data)
+        console.log('Tracker creado exitosamente:', result)
+        return result
+      } catch (error) {
+        console.error('Error al crear tracker:', error)
+        throw error
+      }
+    },
     onSuccess: () => {
+      console.log('Mutation exitosa, invalidando queries')
       queryClient.invalidateQueries({ queryKey: ['trackers'] })
       onClose()
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error en mutation:', error)
       setError('Error al crear el tracker')
     },
   })
