@@ -2,6 +2,31 @@
 
 Una aplicación full-stack para el seguimiento de hábitos y desarrollo personal.
 
+## Características Destacadas
+
+### Modal de Reflexión
+- Se abre al pulsar en cualquier día
+- Diseño dividido en dos columnas
+- Campos inspirados en el documento original "Disolviendo el Ego"
+
+### Secciones del Modal
+- **Preguntas de Contemplación**: Espacio para reflexión profunda
+- **Lista de Creencias a Cuestionar**: Identificación de patrones
+- **Atajos de Transformación**: Herramientas prácticas
+
+### Características Interactivas
+- Textarea para escribir reflexiones
+- Checkboxes para creencias
+- Botón de cierre
+- Diseño responsive
+
+### Estética
+- Mantiene el estilo de la aplicación
+- Colores suaves
+- Iconografía de Lucide
+
+El modal permite una reflexión profunda y consciente para cada día del reto, siguiendo el espíritu del documento original "Disolviendo el Ego".
+
 ## Tecnologías
 
 ### Backend

@@ -4,7 +4,8 @@ import {
   createTracker,
   getTrackers,
   updateDailyEntry,
-  updateTracker
+  updateTracker,
+  deleteTracker
 } from '../controllers/tracker.controller'
 
 const router = Router()
@@ -23,6 +24,9 @@ router.patch('/:trackerId/entries/:date', async (req: Request, res: Response) =>
 })
 router.patch('/:id', async (req: Request, res: Response) => {
   return await updateTracker(req, res)
+})
+router.delete('/:id', async (req: Request, res: Response) => {
+  return await deleteTracker(req, res)
 })
 
 export default router

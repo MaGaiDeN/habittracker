@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth.store'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TrackerForm from '@/components/tracker-form'
 import TrackerCard from '../../../components/tracker-card'
 
@@ -30,17 +30,26 @@ interface Tracker {
 
 export default function DashboardPage() {
   const token = useAuthStore((state) => state.token)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const [showForm, setShowForm] = useState(false)
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      window.location.href = '/login'
+    }
+  }, [isAuthenticated])
 
   const { data: trackers, isLoading, error } = useQuery({
     queryKey: ['trackers'],
+    enabled: !!token && isAuthenticated,
     queryFn: async () => {
-      console.log('Iniciando petición con token:', token)
       if (!token) throw new Error('No hay token')
       return api.getTrackers(token)
     },
     retry: 1
   })
+
+  if (!isAuthenticated) return null
 
   if (isLoading) return <div>Cargando trackers...</div>
   if (error) return <div>Error: {error instanceof Error ? error.message : 'Error desconocido'}</div>

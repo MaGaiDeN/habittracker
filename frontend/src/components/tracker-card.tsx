@@ -1,12 +1,14 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { format, addDays } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { Calendar, CheckCircle, Trash2, Settings } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { api } from '@/lib/api'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { Calendar, CheckCircle, XCircle, AlertCircle, BookOpen, X } from 'lucide-react'
-import { useState } from 'react'
+import ReflectionModal from './reflection-modal'
+import { toast } from 'react-hot-toast'
 
 interface DailyEntry {
   id: string;
@@ -37,145 +39,198 @@ interface TrackerCardProps {
 }
 
 export default function TrackerCard({ tracker }: TrackerCardProps) {
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const token = useAuthStore((state) => state.token)
   const queryClient = useQueryClient()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedDay, setSelectedDay] = useState<number | null>(null)
 
-  const updateEntryMutation = useMutation({
-    mutationFn: async (data: {
-      date: string;
-      completed: boolean;
-      contemplations?: string;
-      beliefs?: string;
-      shortcuts?: string;
-    }) => {
-      return api.updateDailyEntry(token!, tracker.id, data.date, data)
-    },
+  // Añadir efecto para cerrar el menú al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowSettings(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const deleteTrackerMutation = useMutation({
+    mutationFn: () => api.deleteTracker(token!, tracker.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trackers'] })
-      setModalOpen(false)
+      toast?.success('Tracker eliminado correctamente')
+    },
+    onError: (error: Error) => {
+      console.error('Error al eliminar:', error)
+      toast?.error(error.message || 'No se pudo eliminar el tracker')
     }
   })
 
-  const getStatusColor = (status: boolean | null) => {
-    const baseStyle = 'transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md'
-    
-    if (status === true) return `${baseStyle} bg-gradient-to-br from-green-500 to-green-600 text-white`
-    if (status === false) return `${baseStyle} bg-red-100 border-2 border-red-300 text-red-500`
-    return `${baseStyle} bg-gray-100 border border-gray-200 text-gray-400 hover:bg-gray-200`
+  const toggleCompleteMutation = useMutation({
+    mutationFn: async (date: string) => {
+      if (!token) throw new Error('No hay token')
+      const currentEntry = tracker.dailyEntries.find(
+        entry => format(new Date(entry.date), 'yyyy-MM-dd') === format(new Date(date), 'yyyy-MM-dd')
+      )
+      return api.updateDailyEntry(token, tracker.id, date, {
+        completed: !currentEntry?.completed
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    }
+  })
+
+  // Generar array de 30 días desde la fecha de inicio
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const date = addDays(new Date(tracker.startDate), i)
+    const entry = tracker.dailyEntries.find(
+      e => format(new Date(e.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    )
+    return {
+      date,
+      completed: entry?.completed || false,
+      hasReflection: !!(entry?.contemplations || entry?.beliefs || entry?.shortcuts)
+    }
+  })
+
+  const progress = Math.round(
+    (days.filter(day => day.completed).length / days.length) * 100
+  )
+
+  // Función de manejo del clic
+  const handleDelete = async () => {
+    if (confirm('¿Estás seguro de que quieres eliminar este tracker?')) {
+      try {
+        await deleteTrackerMutation.mutateAsync()
+      } catch (error) {
+        // El error ya será manejado por onError del useMutation
+        // No necesitamos hacer nada más aquí
+      }
+    }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
-        <h3 className="text-xl font-bold text-white">{tracker.courseName}</h3>
-        <p className="text-white/80">
-          {format(new Date(tracker.startDate), "d 'de' MMMM, yyyy", { locale: es })}
-        </p>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex justify-between items-center">
+        <div>
+          <h3 className="text-xl font-bold text-white">{tracker.courseName}</h3>
+          <p className="text-white/80">
+            {format(new Date(tracker.startDate), "d 'de' MMMM, yyyy", { locale: es })}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <div className="relative" ref={menuRef}>
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 rounded-full hover:bg-white/20 transition-colors"
+            >
+              <Settings className="w-5 h-5 text-white" />
+            </button>
+            
+            {showSettings && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <button 
+                  className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+                  onClick={() => {
+                    // TODO: Implementar edición
+                    console.log('Editar tracker:', tracker.id)
+                    setShowSettings(false)
+                  }}
+                >
+                  Editar tracker
+                </button>
+                <button 
+                  className="block w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 text-left"
+                  onClick={() => {
+                    if (confirm('¿Estás seguro de que quieres eliminar este tracker?')) {
+                      deleteTrackerMutation.mutate()
+                    }
+                    setShowSettings(false)
+                  }}
+                >
+                  Eliminar tracker
+                </button>
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={handleDelete}
+            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+          >
+            <Trash2 className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </div>
 
       <div className="p-6">
+        {/* Barra de progreso */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Progreso</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-green-500 h-2 rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Grid de días */}
         <div className="grid grid-cols-10 gap-2">
-          {tracker.dailyEntries.map((entry: any, index: number) => (
-            <button 
+          {days.map((day, index) => (
+            <button
               key={index}
-              className={`w-8 h-8 rounded-lg focus:outline-none ${getStatusColor(entry.completed)}`}
-              onClick={() => {
-                setSelectedDay(index + 1)
-                setModalOpen(true)
-              }}
+              onClick={() => setSelectedDay(index + 1)}
+              className={`
+                aspect-square rounded-lg p-1 flex flex-col items-center justify-center
+                text-sm border transition-all
+                ${day.completed 
+                  ? 'bg-green-100 border-green-300' 
+                  : 'bg-gray-50 border-gray-200 hover:border-blue-300'
+                }
+                ${day.hasReflection ? 'ring-2 ring-blue-300' : ''}
+              `}
             >
-              <span className="text-xs font-bold">{index + 1}</span>
+              <span className="font-medium">{index + 1}</span>
+              {day.completed && (
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              )}
+              {day.hasReflection && (
+                <Calendar className="w-4 h-4 text-blue-500" />
+              )}
             </button>
           ))}
         </div>
+
+        {/* Modal de reflexión */}
+        {selectedDay && (
+          <ReflectionModal
+            trackerId={tracker.id}
+            date={days[selectedDay - 1].date.toISOString()}
+            initialData={{
+              // Valores de la entrada diaria si existe
+              ...tracker.dailyEntries.find(
+                entry => format(new Date(entry.date), 'yyyy-MM-dd') === 
+                        format(days[selectedDay - 1].date, 'yyyy-MM-dd')
+              ),
+              // Valores por defecto del tracker
+              defaultContemplations: tracker.contemplations,
+              defaultBeliefs: tracker.beliefs,
+              defaultShortcuts: tracker.shortcuts
+            }}
+            onClose={() => setSelectedDay(null)}
+            onComplete={() => {
+              toggleCompleteMutation.mutate(days[selectedDay - 1].date.toISOString())
+            }}
+          />
+        )}
       </div>
-
-      {modalOpen && selectedDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative m-4">
-            <button 
-              onClick={() => setModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            
-            <h2 className="text-2xl font-bold mb-6 text-indigo-700">
-              Día {selectedDay} - Reflexión
-            </h2>
-
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              const form = e.target as HTMLFormElement
-              const formData = new FormData(form)
-              
-              updateEntryMutation.mutate({
-                date: tracker.dailyEntries[selectedDay - 1].date.toISOString(),
-                completed: true,
-                contemplations: formData.get('contemplations') as string,
-                beliefs: formData.get('beliefs') as string,
-                shortcuts: formData.get('shortcuts') as string,
-              })
-            }}>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-700">
-                    <BookOpen className="inline-block mr-2 text-indigo-500" />
-                    Preguntas de Contemplación
-                  </h3>
-                  <textarea 
-                    name="contemplations"
-                    className="w-full h-40 p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Escribe tus reflexiones del día..."
-                    defaultValue={tracker.dailyEntries[selectedDay - 1]?.contemplations || ''}
-                  ></textarea>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-700">
-                    Creencias a Cuestionar
-                  </h3>
-                  <textarea 
-                    name="beliefs"
-                    className="w-full h-40 p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Escribe las creencias que identificaste hoy..."
-                    defaultValue={tracker.dailyEntries[selectedDay - 1]?.beliefs || ''}
-                  ></textarea>
-
-                  <h3 className="font-semibold text-lg mt-4 mb-3 text-gray-700">
-                    Atajos de Transformación
-                  </h3>
-                  <textarea 
-                    name="shortcuts"
-                    className="w-full h-20 p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Escribe tus atajos o insights del día..."
-                    defaultValue={tracker.dailyEntries[selectedDay - 1]?.shortcuts || ''}
-                  ></textarea>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  disabled={updateEntryMutation.isPending}
-                >
-                  {updateEntryMutation.isPending ? 'Guardando...' : 'Guardar Reflexión'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 } 

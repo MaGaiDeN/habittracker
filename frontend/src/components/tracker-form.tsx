@@ -26,23 +26,16 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
       selfInquiry?: string;
       notes?: string;
     }) => {
-      console.log('Intentando crear tracker con datos:', data)
-      try {
-        const result = await api.createTracker(token!, data)
-        console.log('Tracker creado exitosamente:', result)
-        return result
-      } catch (error) {
-        console.error('Error al crear tracker:', error)
-        throw error
-      }
+      if (!token) throw new Error('No hay token')
+      return api.createTracker(token, data)
     },
     onSuccess: () => {
-      console.log('Mutation exitosa, invalidando queries')
       queryClient.invalidateQueries({ queryKey: ['trackers'] })
       onClose()
     },
-    onError: (error) => {
-      console.error('Error en mutation:', error)
+    onError: (err: unknown) => {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
+      console.error('Error en mutation:', errorMessage)
       setError('Error al crear el tracker')
     },
   })
@@ -51,21 +44,20 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     
-    const startDate = new Date(formData.get('startDate') as string)
-    const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + 29) // 30 días en total
-
-    createTrackerMutation.mutate({
+    const data = {
       courseName: formData.get('courseName') as string,
-      startDate,
-      endDate,
+      startDate: new Date(formData.get('startDate') as string),
+      endDate: new Date(formData.get('startDate') as string),
       contemplations: formData.get('contemplations') as string,
       beliefs: formData.get('beliefs') as string,
       doors: formData.get('doors') as string,
       shortcuts: formData.get('shortcuts') as string,
       selfInquiry: formData.get('selfInquiry') as string,
       notes: formData.get('notes') as string,
-    })
+    }
+    console.log('Datos a enviar:', data)
+
+    createTrackerMutation.mutate(data)
   }
 
   const handleTestTracker = () => {

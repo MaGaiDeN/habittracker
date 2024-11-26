@@ -33,21 +33,31 @@ export const getTrackers = async (req: Request, res: Response) => {
 
 export const createTracker = async (req: Request, res: Response) => {
   try {
+    const { courseName, startDate, endDate, contemplations, beliefs, shortcuts } = req.body
     const userId = req.user?.id
-    console.log('Creando tracker para usuario:', userId)
+
     console.log('Datos recibidos:', req.body)
+    console.log('Usuario:', userId)
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Usuario no autorizado' })
+    }
 
     const tracker = await prisma.tracker.create({
       data: {
-        ...req.body,
+        courseName,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
         userId,
+        contemplations,
+        beliefs,
+        shortcuts
       }
     })
 
-    console.log('Tracker creado:', tracker)
     res.status(201).json(tracker)
   } catch (error) {
-    console.error('Error al crear tracker:', error)
+    console.error('Error detallado:', error)
     res.status(500).json({ 
       message: 'Error al crear tracker',
       error: error instanceof Error ? error.message : 'Error desconocido'
@@ -103,5 +113,49 @@ export const updateDailyEntry = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al actualizar entrada:', error)
     res.status(500).json({ message: 'Error al actualizar entrada' })
+  }
+}
+
+export const deleteTracker = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Usuario no autorizado' })
+    }
+
+    // Primero verificamos que el tracker existe y pertenece al usuario
+    const tracker = await prisma.tracker.findFirst({
+      where: {
+        id,
+        userId
+      }
+    })
+
+    if (!tracker) {
+      return res.status(404).json({ message: 'Tracker no encontrado' })
+    }
+
+    // Primero eliminamos los registros relacionados
+    await prisma.$transaction([
+      // Eliminar todos los registros diarios relacionados
+      prisma.dailyEntry.deleteMany({
+        where: { trackerId: id }
+      }),
+      // Finalmente eliminamos el tracker
+      prisma.tracker.delete({
+        where: { id }
+      })
+    ])
+
+    return res.status(200).json({ message: 'Tracker eliminado correctamente' })
+
+  } catch (error) {
+    console.error('Error al eliminar tracker:', error)
+    return res.status(500).json({ 
+      message: 'Error al eliminar el tracker',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    })
   }
 } 

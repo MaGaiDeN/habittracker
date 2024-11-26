@@ -125,18 +125,28 @@ export const api = {
     return response.json()
   },
 
-  async updateDailyEntry(token: string, trackerId: string, date: string, data: {
-    completed: boolean;
-    notes?: string;
-  }) {
-    const res = await fetch(`${API_URL}/trackers/${trackerId}/entries/${date}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
+  async updateDailyEntry(
+    token: string, 
+    trackerId: string, 
+    date: string, 
+    data: {
+      completed?: boolean
+      contemplations?: string
+      beliefs?: string
+      shortcuts?: string
+    }
+  ) {
+    const res = await fetch(
+      `${API_URL}/trackers/${trackerId}/entries/${date}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      }
+    )
     if (!res.ok) throw new Error('Error al actualizar entrada')
     return res.json()
   },
@@ -158,6 +168,53 @@ export const api = {
       body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error('Error al actualizar tracker')
+    return res.json()
+  },
+
+  async deleteTracker(token: string, trackerId: string) {
+    const res = await fetch(`${API_URL}/trackers/${trackerId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Error al eliminar el tracker')
+    }
+
+    return res.json()
+  },
+
+  async deleteHabit(token: string, habitId: string) {
+    const res = await fetch(`${API_URL}/habits/${habitId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!res.ok) throw new Error('Error al eliminar hábito')
+    return res.json()
+  },
+
+  async updateHabit(token: string, habitId: string, data: { 
+    name?: string; 
+    type?: string; 
+    description?: string 
+  }) {
+    const res = await fetch(`${API_URL}/habits/${habitId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    
+    if (!res.ok) throw new Error('Error al actualizar hábito')
     return res.json()
   }
 } 
