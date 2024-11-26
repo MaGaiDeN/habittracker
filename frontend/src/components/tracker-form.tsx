@@ -56,6 +56,24 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
     })
   }
 
+  const handleTestTracker = () => {
+    const startDate = new Date()
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + 29)
+
+    createTrackerMutation.mutate({
+      courseName: "Curso de Prueba",
+      startDate,
+      endDate,
+      contemplations: "Preguntas de contemplación de ejemplo",
+      beliefs: "Creencias de ejemplo",
+      doors: "Puertas de ejemplo",
+      shortcuts: "Atajos de ejemplo",
+      selfInquiry: "Auto-indagación de ejemplo",
+      notes: "Notas de ejemplo"
+    })
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
@@ -65,6 +83,14 @@ export default function TrackerForm({ onClose }: TrackerFormProps) {
             ✕
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={handleTestTracker}
+          className="mb-4 text-sm text-blue-600 hover:text-blue-700"
+        >
+          Crear tracker de prueba
+        </button>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-md">

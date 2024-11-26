@@ -2,6 +2,13 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
+// Añadir función de ayuda para logs
+const log = (message: string, ...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, ...args)
+  }
+}
+
 export const api = {
   async login(email: string, password: string) {
     const res = await fetch(`${API_URL}/auth/login`, {
@@ -98,7 +105,7 @@ export const api = {
   },
 
   async getTrackers(token: string) {
-    console.log('Haciendo fetch a:', `${API_URL}/trackers`)
+    log('Haciendo fetch a:', `${API_URL}/trackers`)
     const response = await fetch(`${API_URL}/trackers`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -107,7 +114,7 @@ export const api = {
     })
     
     if (!response.ok) {
-      console.error('Error response:', response.status, await response.text())
+      log('Error response:', response.status, await response.text())
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
