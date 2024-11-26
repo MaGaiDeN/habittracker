@@ -8,8 +8,20 @@ dotenv.config()
 
 const app = express()
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  })
+})
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: [
+    'https://habittracker-lemon.vercel.app',
+    'http://localhost:3000'
+  ],
   credentials: true
 }))
 app.use(express.json())
