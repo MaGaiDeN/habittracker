@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { api } from '@/lib/api'
 import ReflectionModal from './reflection-modal'
 import { toast } from 'react-hot-toast'
+import EditTrackerModal from './edit-tracker-modal'
 
 interface DailyEntry {
   id: string;
@@ -41,6 +42,7 @@ interface TrackerCardProps {
 export default function TrackerCard({ tracker }: TrackerCardProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const token = useAuthStore((state) => state.token)
   const queryClient = useQueryClient()
@@ -136,8 +138,7 @@ export default function TrackerCard({ tracker }: TrackerCardProps) {
                 <button 
                   className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
                   onClick={() => {
-                    // TODO: Implementar edición
-                    console.log('Editar tracker:', tracker.id)
+                    setShowEditModal(true)
                     setShowSettings(false)
                   }}
                 >
@@ -214,12 +215,10 @@ export default function TrackerCard({ tracker }: TrackerCardProps) {
             trackerId={tracker.id}
             date={days[selectedDay - 1].date.toISOString()}
             initialData={{
-              // Valores de la entrada diaria si existe
               ...tracker.dailyEntries.find(
                 entry => format(new Date(entry.date), 'yyyy-MM-dd') === 
                         format(days[selectedDay - 1].date, 'yyyy-MM-dd')
               ),
-              // Valores por defecto del tracker
               defaultContemplations: tracker.contemplations,
               defaultBeliefs: tracker.beliefs,
               defaultShortcuts: tracker.shortcuts
@@ -228,6 +227,20 @@ export default function TrackerCard({ tracker }: TrackerCardProps) {
             onComplete={() => {
               toggleCompleteMutation.mutate(days[selectedDay - 1].date.toISOString())
             }}
+          />
+        )}
+
+        {/* Nuevo modal de edición */}
+        {showEditModal && (
+          <EditTrackerModal
+            tracker={{
+              ...tracker,
+              contemplations: tracker.contemplations ?? null,
+              beliefs: tracker.beliefs ?? null,
+              shortcuts: tracker.shortcuts ?? null,
+              selfInquiry: tracker.selfInquiry ?? null
+            }}
+            onClose={() => setShowEditModal(false)}
           />
         )}
       </div>
