@@ -17,6 +17,7 @@ app.get('/health', (req, res) => {
     database: process.env.DATABASE_URL ? 'configured' : 'missing',
     allowedOrigins: [
       'https://habittracker-lemon.vercel.app',
+      'https://habittracker-g1lyqcc6y-magaiden-gmailcoms-projects.vercel.app',
       'http://localhost:3000'
     ]
   })
@@ -25,15 +26,19 @@ app.get('/health', (req, res) => {
 // Logging middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`)
+  console.log('Headers:', req.headers)
   next()
 })
 
 app.use(cors({
   origin: [
     'https://habittracker-lemon.vercel.app',
+    'https://habittracker-g1lyqcc6y-magaiden-gmailcoms-projects.vercel.app',
     'http://localhost:3000'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(express.json())
 

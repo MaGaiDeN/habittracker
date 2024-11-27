@@ -43,6 +43,11 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
+    console.log('Login attempt:', {
+      body: req.body,
+      headers: req.headers
+    })
+    
     const { email, password } = req.body
 
     // Usuario de prueba - crear si no existe
@@ -87,6 +92,9 @@ export const login = async (req: Request, res: Response) => {
     res.json({ token })
   } catch (error) {
     console.error('Error en login:', error)
-    res.status(500).json({ message: 'Error al iniciar sesión' })
+    res.status(500).json({ 
+      message: 'Error al iniciar sesión',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    })
   }
 } 
