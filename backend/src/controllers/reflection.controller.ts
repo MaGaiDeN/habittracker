@@ -22,7 +22,7 @@ export const reflectionController = {
       const { date, emotion, observation, insights } = req.body
       const userId = req.user.id
 
-      const reflection = await prisma.dailyreflection.create({
+      const reflection = await prisma.dailyReflection.create({
         data: {
           userId,
           date: new Date(date),
