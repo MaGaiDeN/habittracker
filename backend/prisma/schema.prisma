@@ -19,6 +19,7 @@ model User {
   password  String
   name      String
   trackers  Tracker[]
+  reflections DailyReflection[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -54,4 +55,18 @@ model DailyEntry {
   shortcuts     String?
 
   @@unique([trackerId, date])
+}
+
+model DailyReflection {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime
+  emotion     String
+  observation String
+  insights    String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }

@@ -2,9 +2,19 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
-// Log la URL base al iniciar
-console.log('API URL configurada:', API_URL)
-console.log('Ambiente:', process.env.NODE_ENV)
+// Mejorar logging y verificación de ambiente
+const isDev = process.env.NODE_ENV === 'development'
+const RENDER_API = 'https://habittracker-qlh3.onrender.com/api'
+
+// Verificar y ajustar API_URL si es necesario
+const FINAL_API_URL = isDev ? API_URL : RENDER_API
+
+// Log mejorado
+console.log('Configuración API:', {
+  ambiente: process.env.NODE_ENV,
+  apiUrl: FINAL_API_URL,
+  esDesarrollo: isDev
+})
 
 // Añadir función de ayuda para logs
 const log = (message: string, ...args: any[]) => {

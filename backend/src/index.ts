@@ -8,13 +8,24 @@ dotenv.config()
 
 const app = express()
 
-// Health check endpoint
+// Health check endpoint con más información
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    database: process.env.DATABASE_URL ? 'configured' : 'missing',
+    allowedOrigins: [
+      'https://habittracker-lemon.vercel.app',
+      'http://localhost:3000'
+    ]
   })
+})
+
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`)
+  next()
 })
 
 app.use(cors({
@@ -34,4 +45,6 @@ const PORT = process.env.PORT || 3001
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  console.log('Environment:', process.env.NODE_ENV)
+  console.log('Database configured:', !!process.env.DATABASE_URL)
 }) 
